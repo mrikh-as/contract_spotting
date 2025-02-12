@@ -21,10 +21,10 @@ class IfContract(BasicSetup):
         super().setup
 
     def evaluation(self):
-        super().logger.info(
-            "Проверяю, является ли текст, введенный пользователем,договором"
-        )
-        super().logger.debug(f"Текст: {self.input}")
+        # super().logger.info(
+        #    "Проверяю, является ли текст, введенный пользователем,договором"
+        # )
+        # super().logger.debug(f"Текст: {self.input}")
         self.response = super().client.chat.completions.create(
             model="deepseek-chat",
             messages=[
@@ -43,11 +43,14 @@ class IfContract(BasicSetup):
             ],
             response_format={"type": "json_object"},
         )
-
         result = json.loads(self.response.choices[0].message.content)
-        super().logger.info(f"Проверка завершена. Вероятность: {result['Probability']}")
+        # super().logger.info(f"Проверка завершена. Вероятность: {result['Probability']}")
         return result
 
     def run(self):
         result = self.evaluation()
         return result
+
+
+example = IfContract()
+example.run()
