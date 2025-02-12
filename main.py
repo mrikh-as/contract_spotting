@@ -18,7 +18,7 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 
-class IfContract:
+class ContractAssessment:
     def __init__(self):
         self.input = user_input
         self.response = None
@@ -48,8 +48,20 @@ class IfContract:
         logger.info(f"Проверка завершена. Вероятность: {result['Probability']}")
         return result
 
-    def run(self):
-        result = self.evaluation()
+    def contract_spotting(self):
+        return result
+
+    def rule_recall(self):
+        return result
+
+    def rule_application(self):
+        return result
+
+    def process_all(self):
+        self.evaluation()
+        self.contract_spotting()
+        self.rule_recall()
+        self.rule_application()
         return result
 
 
@@ -59,5 +71,5 @@ user_input = """1.1. Исполнитель обязуется собствен�
 обязуется создать Исполнителю необходимые условия для оказания услуг и
 оплатить обусловленную Договором цену. 
             """
-example = IfContract()
-example.run()
+example = ContractAssessment()
+example.process_all()
