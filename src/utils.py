@@ -44,3 +44,5 @@ def libcheck(lib: str):
         print(f"Библиотека '{lib}' не установлена.")
     else:
         print(f"Библиотека '{lib}' установлена.")
+
+libcheck('spacy')

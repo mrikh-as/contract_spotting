@@ -73,3 +73,59 @@ user_input = """1.1. Исполнитель обязуется собствен�
             """
 example = ContractAssessment()
 example.process_all()
+
+import spacy
+from spacy import displacy
+import networkx as nx
+import matplotlib.pyplot as plt
+
+# Загружаем модель Spacy для обработки русского языка
+nlp = spacy.load("ru_core_news_sm")
+
+
+# Функция для извлечения сущностей и отношений
+def extract_entities_and_relations(text):
+    doc = nlp(text)
+
+    # Извлекаем сущности
+    entities = []
+    for ent in doc.ents:
+        entities.append((ent.text, ent.label_))
+
+    # Извлекаем отношения
+    relations = []
+    for token in doc:
+        if token.dep_ == "ROOT":
+            subject = [w for w in token.lefts if w.dep_ == "nsubj"]
+            object = [w for w in token.rights if w.dep_ == "dobj"]
+            if len(subject) > 0 and len(object) > 0:
+                relations.append((subject[0].text, token.text, object[0].text))
+
+    return entities, relations
+
+
+# Пример текста
+text = """
+Илон Маск основал компанию Tesla в 2003 году. 
+Tesla производит электромобили и солнечные батареи.
+"""
+
+entities, relations = extract_entities_and_relations(text)
+
+# Создаем граф
+G = nx.MultiDiGraph()
+
+for entity in entities:
+    G.add_node(entity[0], label=entity[1])
+
+for relation in relations:
+    G.add_edge(relation[0], relation[2], label=relation[1])
+
+# Визуализируем граф
+pos = nx.spring_layout(G)
+nx.draw_networkx_nodes(G, pos, node_size=700)
+nx.draw_networkx_edges(G, pos, width=2)
+nx.draw_networkx_labels(G, pos, font_size=14, font_family="sans-serif")
+edge_labels = {(e[0], e[1]): e[2]["label"] for e in G.edges(data=True)}
+nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=7)
+plt.show()
