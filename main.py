@@ -79,6 +79,16 @@ from spacy import displacy
 import networkx as nx
 import matplotlib.pyplot as plt
 
+
+# Пример текста
+text = """1.1. Исполнитель обязуется собственными либо привлеченными
+силами оказать услуги в соответствии с условиями настоящего Договора,
+Заявками Заказчика, а также приложениями к настоящему Договору, а Заказчик
+обязуется создать Исполнителю необходимые условия для оказания услуг и
+оплатить обусловленную Договором цену. 
+            """
+
+
 # Загружаем модель Spacy для обработки русского языка
 nlp = spacy.load("ru_core_news_sm")
 
@@ -91,7 +101,7 @@ def extract_entities_and_relations(text):
     entities = []
     for ent in doc.ents:
         entities.append((ent.text, ent.label_))
-
+        
     # Извлекаем отношения
     relations = []
     for token in doc:
@@ -100,15 +110,22 @@ def extract_entities_and_relations(text):
             object = [w for w in token.rights if w.dep_ == "dobj"]
             if len(subject) > 0 and len(object) > 0:
                 relations.append((subject[0].text, token.text, object[0].text))
+    
+    print(entities)#, relations
+
+extract_entities_and_relations(text)
+print(entities)
 
     return entities, relations
 
-
+print(entities)
 # Пример текста
-text = """
-Илон Маск основал компанию Tesla в 2003 году. 
-Tesla производит электромобили и солнечные батареи.
-"""
+text = """1.1. Исполнитель обязуется собственными либо привлеченными
+силами оказать услуги в соответствии с условиями настоящего Договора,
+Заявками Заказчика, а также приложениями к настоящему Договору, а Заказчик
+обязуется создать Исполнителю необходимые условия для оказания услуг и
+оплатить обусловленную Договором цену. 
+            """
 
 entities, relations = extract_entities_and_relations(text)
 
