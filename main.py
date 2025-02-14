@@ -21,51 +21,50 @@ logger.addHandler(handler)
 
 class ContractAssessment:
     def __init__(self):
-        self.input = None
+        self.input_file = Path(__file__).parent / "data" / "raw" / "1.txt"
         self.messages = []
+        self.data = None
         self.rights = None
         self.analysis = None
         self.report = None
 
-    def read(self):
-        file_path = Path(__file__).parent / "data" / "raw" / "1.txt"
-        with open(file_path, mode="r", encoding="utf-8") as file:
-            self.input = file.read()
+    def load_data(self):
+        with open(self.input_file, mode="r", encoding="utf-8") as file:
+            self.data = file.read()
+            return self.data
 
-    def evaluation(self):
-        logger.info("Проверяю, является ли текст, введенный пользователем,договором")
-        # logger.debug(f"Текст: {self.input}")
+    def evaluate(self):
+        logger.info("Проверяю, является ли текст, введенный пользователем,договором.")
         self.messages.append(
-            [
-                {
-                    "role": "system",
-                    "content": """Ты - junior-юрист. Оцени по шкале от 0 до 100 процентов, с какой вероятностью
+            {
+                "role": "system",
+                "content": """Ты - junior-юрист. Оцени по шкале от 0 до 100 процентов, с какой вероятностью
                     введенный пользователем текст является договором.
                     Ответ дай в формате json. Пример ответа:
                     {
                                 "Probability": "80"
                     }
                                 """,
-                },
-                {"role": "user", "content": self.input},
-            ]
+            }
         )
+        self.messages.append({"role": "user", "content": self.data})
         response = client.chat.completions.create(
             model="deepseek-chat",
             messages=self.messages,
             response_format={"type": "json_object"},
         )
-        # full_message = response.choices[0].message
-        # self.messages.append(full_message)
+        full_message = response.choices[0].message
+        self.messages.append(full_message)
         result = json.loads(response.choices[0].message.content)
-        logger.info(f"Проверка завершена. Вероятность: {result['Probability']}")
-        if result["Probability"] < 80:
+        probability = int(result["Probability"])
+        logger.info(f"Проверка завершена. Вероятность: {probability}")
+        if probability < 80:
             return None
         else:
             logger.info("Перехожу к следующему этапу проверки договора.")
             return result
 
-    def contract_spotting(self):
+    def extract(self):
         logger.info("Извлекаю из договора права и обязанности.")
         self.messages.append(
             {
@@ -89,9 +88,8 @@ class ContractAssessment:
                             }
                             """,
             }
-            # "role": "user",
-            # "content": "хмм"
         )
+        self.messages.append({"role": "user", "content": self.data})
         response = client.chat.completions.create(
             model="deepseek-chat",
             messages=self.messages,
@@ -99,8 +97,10 @@ class ContractAssessment:
         )
         full_message = response.choices[0].message
         self.messages.append(full_message)
+        with open("output.txt", "w", encoding="utf-8") as file:
+            file.write(full_message.content)
         self.rights = json.loads(response.choices[0].message.content)
-        logger.info(f"Права и обязанности извлечены:\n{self.rights}")
+        logger.info(f"Права и обязанности извлечены.")
         return self.rights
 
     # def rule_recall(self):
@@ -160,7 +160,7 @@ class ContractAssessment:
         logger.info("Заключение подготовлено.")
         print(f"self.report")
 
-    def process_all(self):
+    def process(self):
         result = self.evaluation()
         if result:
             self.contract_spotting()
@@ -174,11 +174,10 @@ class ContractAssessment:
         return result
 
 
-file_path = Path(__file__).parent.parent / "data" / "raw" / "1.txt"
+assessment = ContractAssessment()
+assessment.load_data()
+assessment.evaluate()
+assessment.extract()
+print(assessment.rights)
 
-example = ContractAssessment()
-
-example.read()
-print(example.input)
-type(example.input)
-example.evaluation()
+print(assessment.messages)
