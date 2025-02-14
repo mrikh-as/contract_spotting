@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from pathlib import Path
 
 from dotenv import find_dotenv, load_dotenv
 from openai import OpenAI
@@ -20,36 +21,85 @@ logger.addHandler(handler)
 
 class ContractAssessment:
     def __init__(self):
-        self.input = user_input
-        self.response = None
+        self.input = None
+        self.messages = []
+        self.rights = None
+        self.report = None
+
+    def read(self):
+        with open(file_path, mode="r", encoding="utf-8") as file:
+            self.input = file.read()
 
     def evaluation(self):
         logger.info("Проверяю, является ли текст, введенный пользователем,договором")
         logger.debug(f"Текст: {self.input}")
-        self.response = client.chat.completions.create(
-            model="deepseek-chat",
-            messages=[
+        self.messages.append(
+            [
                 {
                     "role": "system",
-                    "content": """Пользователь ввел текст. Оцени,
-                        с какой вероятностью введенный пользователем текст
-                        является договором, по шкале от 0 до 100 процентов.
-                        Ответ дай в формате json. Пример ответа:
-                            {
+                    "content": """Ты - юрист. Оцени по шкале от 0 до 100 процентов, с какой вероятностью
+                    введенный пользователем текст является договором.
+                    Ответ дай в формате json. Пример ответа:
+                    {
                                 "Probability": "80"
-                            }
-                            """,
+                    }
+                                """,
                 },
                 {"role": "user", "content": self.input},
             ],
+        )
+        response = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=self.messages,
             response_format={"type": "json_object"},
         )
-        result = json.loads(self.response.choices[0].message.content)
+        full_message = response.choices[0].message
+        self.messages.append(full_message)
+        result = json.loads(response.choices[0].message.content)
         logger.info(f"Проверка завершена. Вероятность: {result['Probability']}")
-        return result
+        if result["Probability"] < 80:
+            return None
+        else:
+            logger.info("Перехожу к следующему этапу проверки договора.")
+            return result
 
     def contract_spotting(self):
-        return result
+        logger.info("Извлекаю из договора права и обязанности.")
+        self.messages.append(
+            {
+                "role": "system",
+                "content": """Ты - специалист в области обработки естественного языка (nlp).
+                Ты хорошо умеешь проводить синтаксический анализ предложений и строить деревья зависимостей слов в предложении.
+                Ранее юрист идентифицировал введенный пользователем текст в качестве фрагмента договора. 
+                Используя тот же текст, извлеки из него все без исключения самостоятельные глаголы и 
+                реконструируй каждый из этих самостоятельных глаголов до полного простого предложения,
+                процитировав в простом предложении все зависимые от этого глагола члены предложения.
+                Список получившихся предложений оформи в формате json.
+                Пример текста, введенного пользователем: 1.1. По договору возмездного оказания услуг Исполнитель обязуется 
+                по заданию Заказчика оказать услуги, указанные в п.1.2. настоящего договора,
+                а Заказчик обязуется оплатить эти услуги и принять результат этих услуг.
+                Пример ответа:
+                            {
+                                "Исполнитель": "1.1. По договору возмездного оказания услуг Исполнитель обязуется 
+                по заданию Заказчика оказать услуги, указанные в п.1.2. настоящего договора",
+                                "Заказчик": "1.1. Заказчик обязуется оплатить эти услуги.",
+                                "Заказчик": "1.1. Заказчик обязуется принять результат этих услуг
+                            }
+                            """,
+            }
+            # "role": "user",
+            # "content": "хмм"
+        )
+        response = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=self.messages,
+            response_format={"type": "json_object"},
+        )
+        full_message = response.choices[0].message
+        self.messages.append(full_message)
+        self.rights = json.loads(response.choices[0].message.content)
+        logger.info(f"Права и обязанности извлечены:\n{self.rights}")
+        return self.rights
 
     def rule_recall(self):
         return result
@@ -57,92 +107,42 @@ class ContractAssessment:
     def rule_application(self):
         return result
 
+    def report(self):
+        logger.info("Генерирую итоговый доклад.")
+        self.messages.append(
+            [
+                {
+                    "role": "system",
+                    "content": """Ты - юрист. Оцени по шкале от 0 до 100 процентов, с какой вероятностью
+                    введенный пользователем текст является договором.
+                    Ответ дай в формате json. Пример ответа:
+                    {
+                                "Probability": "80"
+                    }
+                                """,
+                },
+                {"role": "user", "content": self.input},
+            ],
+        )
+        self.report = "Здесь будет итоговый результат проверки."
+        return result
+
     def process_all(self):
-        self.evaluation()
-        self.contract_spotting()
-        self.rule_recall()
-        self.rule_application()
+        result = self.evaluation()
+        if result:
+            self.contract_spotting()
+            # self.rule_recall()
+            # self.rule_application()
+            self.report()
+            print(f"{self.report}")
+        else:
+            print("Проверка остановлена. Загрузите текст договора.")
+
+        #
         return result
 
 
-user_input = """1.1. Исполнитель обязуется собственными либо привлеченными
-силами оказать услуги в соответствии с условиями настоящего Договора,
-Заявками Заказчика, а также приложениями к настоящему Договору, а Заказчик
-обязуется создать Исполнителю необходимые условия для оказания услуг и
-оплатить обусловленную Договором цену. 
-            """
+file_path = Path(__file__).parent.parent / "data" / "raw" / "1.txt"
+
 example = ContractAssessment()
 example.process_all()
-
-import spacy
-from spacy import displacy
-import networkx as nx
-import matplotlib.pyplot as plt
-
-
-# Пример текста
-text = """1.1. Исполнитель обязуется собственными либо привлеченными
-силами оказать услуги в соответствии с условиями настоящего Договора,
-Заявками Заказчика, а также приложениями к настоящему Договору, а Заказчик
-обязуется создать Исполнителю необходимые условия для оказания услуг и
-оплатить обусловленную Договором цену. 
-            """
-
-
-# Загружаем модель Spacy для обработки русского языка
-nlp = spacy.load("ru_core_news_sm")
-
-
-# Функция для извлечения сущностей и отношений
-def extract_entities_and_relations(text):
-    doc = nlp(text)
-
-    # Извлекаем сущности
-    entities = []
-    for ent in doc.ents:
-        entities.append((ent.text, ent.label_))
-        
-    # Извлекаем отношения
-    relations = []
-    for token in doc:
-        if token.dep_ == "ROOT":
-            subject = [w for w in token.lefts if w.dep_ == "nsubj"]
-            object = [w for w in token.rights if w.dep_ == "dobj"]
-            if len(subject) > 0 and len(object) > 0:
-                relations.append((subject[0].text, token.text, object[0].text))
-    
-    print(entities)#, relations
-
-extract_entities_and_relations(text)
-print(entities)
-
-    return entities, relations
-
-print(entities)
-# Пример текста
-text = """1.1. Исполнитель обязуется собственными либо привлеченными
-силами оказать услуги в соответствии с условиями настоящего Договора,
-Заявками Заказчика, а также приложениями к настоящему Договору, а Заказчик
-обязуется создать Исполнителю необходимые условия для оказания услуг и
-оплатить обусловленную Договором цену. 
-            """
-
-entities, relations = extract_entities_and_relations(text)
-
-# Создаем граф
-G = nx.MultiDiGraph()
-
-for entity in entities:
-    G.add_node(entity[0], label=entity[1])
-
-for relation in relations:
-    G.add_edge(relation[0], relation[2], label=relation[1])
-
-# Визуализируем граф
-pos = nx.spring_layout(G)
-nx.draw_networkx_nodes(G, pos, node_size=700)
-nx.draw_networkx_edges(G, pos, width=2)
-nx.draw_networkx_labels(G, pos, font_size=14, font_family="sans-serif")
-edge_labels = {(e[0], e[1]): e[2]["label"] for e in G.edges(data=True)}
-nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=7)
-plt.show()
