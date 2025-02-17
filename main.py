@@ -199,7 +199,7 @@ class ContractAssessment:
                 """,
             }
         )
-        self.messages.append({"role": "user", "content": "f{self.rules}"})
+        self.messages.append({"role": "user", "content": f"{self.rules}"})
         response = client.chat.completions.create(
             model="deepseek-chat",
             messages=self.messages,
@@ -226,7 +226,7 @@ class ContractAssessment:
                 """,
             }
         )
-        self.messages.append({"role": "user", "content": "f{self.risks}"})
+        self.messages.append({"role": "user", "content": f"{self.risks}"})
         response = client.chat.completions.create(
             model="deepseek-chat", messages=self.messages
         )
