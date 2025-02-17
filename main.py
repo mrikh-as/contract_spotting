@@ -45,7 +45,7 @@ class ContractAssessment:
                     {
                                 "Probability": "80"
                     }
-                                """,
+                    """,
             }
         )
         self.messages.append({"role": "user", "content": self.data})
@@ -76,12 +76,13 @@ class ContractAssessment:
                 Используя тот же текст, извлеки из него все без исключения самостоятельные глаголы и 
                 реконструируй каждый из этих самостоятельных глаголов до полного простого предложения,
                 процитировав в простом предложении все зависимые от этого глагола члены предложения.
-                Список получившихся предложений оформи в формате json.
-                Пример текста, введенного пользователем: 1.1. По договору возмездного оказания услуг Исполнитель обязуется 
+                Ответ дай в формате json.
+                Пример текста, введенного пользователем:
+                1.1. По договору возмездного оказания услуг Исполнитель обязуется 
                 по заданию Заказчика оказать услуги, указанные в п.1.2. настоящего договора,
                 а Заказчик обязуется оплатить эти услуги и принять результат этих услуг.
-                Пример ответа:
-                {
+                Пример твоего ответа:
+                    {
                     "Исполнитель": "1.1. По договору возмездного оказания услуг Исполнитель обязуется 
                 по заданию Заказчика оказать услуги, указанные в п.1.2. настоящего договора",
                     "Заказчик": "1.1. Заказчик обязуется оплатить эти услуги.",
@@ -102,7 +103,7 @@ class ContractAssessment:
         with open("rights.txt", "w", encoding="utf-8") as file:
             file.write(full_message.content)
         logger.info("Права и обязанности сохранены в файле rights.txt.")
-        self.rights = response.choices[0].message.content
+        self.rights = json.loads(response.choices[0].message.content)
         return self.rights
 
     def recall(self):
@@ -116,8 +117,8 @@ class ContractAssessment:
                 кроме случаев, когда содержание соответствующего условия предписано законом. В последнем
                 случае договор должен соответствовать обязательным для сторон правилам, установленным законом
                 (императивным нормам).
-                Ранее специалист в области обработки естественного языка (nlp) для твоего удобства
-                извлек из фрагмента договора простые предложения, каждое из которых является
+                Тебе дается в пользовательском промте набор предложений из договора в формате json, которые специалист в области обработки естественного языка (nlp) для твоего удобства
+                извлек из фрагмента договора, и каждое из которых является
                 правом или обязанностью одной или нескольких сторон по договору.
                 Тебе нужно проверить, предписано ли законом РФ (в частности - ГК РФ) содержание того или иного права или обязанности
                 из фрагмента договора. Если предписано - нужно указать релевантное положение закона. Если нет - не выдумывай и прямо скажи,
@@ -144,7 +145,7 @@ class ContractAssessment:
                 """,
             }
         )
-        self.messages.append({"role": "user", "content": self.rights})
+        self.messages.append({"role": "user", "content": f"{self.rights}"})
         response = client.chat.completions.create(
             model="deepseek-chat",
             messages=self.messages,
@@ -198,7 +199,7 @@ class ContractAssessment:
                 """,
             }
         )
-        self.messages.append({"role": "user", "content": self.rules})
+        self.messages.append({"role": "user", "content": "f{self.rules}"})
         response = client.chat.completions.create(
             model="deepseek-chat",
             messages=self.messages,
@@ -216,7 +217,6 @@ class ContractAssessment:
     def report(self):
         logger.info("Генерирую итоговое заключение.")
         self.messages.append(
-            # [
             {
                 "role": "system",
                 "content": """Ты - партнер юридической фирмы. Твоя задача - на основании информации о рисках, полученной от senior-юриста,
@@ -226,7 +226,7 @@ class ContractAssessment:
                 """,
             }
         )
-        self.messages.append({"role": "user", "content": self.risks})
+        self.messages.append({"role": "user", "content": "f{self.risks}"})
         response = client.chat.completions.create(
             model="deepseek-chat", messages=self.messages
         )
@@ -253,4 +253,4 @@ class ContractAssessment:
 
 assessment = ContractAssessment()
 
-assessment.recall()
+assessment.process()
