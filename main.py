@@ -102,7 +102,7 @@ class ContractAssessment:
         with open("rights.txt", "w", encoding="utf-8") as file:
             file.write(full_message.content)
         logger.info("Права и обязанности сохранены в файле rights.txt.")
-        self.rights = json.loads(response.choices[0].message.content)
+        self.rights = response.choices[0].message.content
         return self.rights
 
     def recall(self):
@@ -124,16 +124,16 @@ class ContractAssessment:
                 что релевантное положение закона отсутствует.
                 Ответ дай в формате json.
                 Пример полученных тобой прав и обязанностей:
-                {
+                    {
                     "Перевозчик": "2.3. Перевозчик в случае утраты груза возмещает ущерб и провозную плату.",
                     "Продавец": "1.3. Продавец освобождается от ответственности за истребование товара у покупателя третьими лицами.",
                     "Подрядчик": "3.1. Подрядчик обязан выполнить работу лично, без привлечения третьих лиц.",
                     "Займодавец": "5.3. Замодавец имеет право на проценты за пользование займом.",
                     "Арендодатель": "4.1. Арендодатель вправе осуществлять проверки чистоты арендованного помещения.",
                     "Исполнитель": "Исполнитель обеспечивает наличие свободных вагонов на Казанском вокзале каждый понедельник"
-                }
+                    }
                 Пример твоего ответа:
-                {
+                    {
                     "Перевозчик": ["2.3. Перевозчик в случае утраты груза возмещает ущерб и провозную плату.", "Пункт 3 статьи 796 ГК РФ"],
                     "Продавец": ["1.3. Продавец освобождается от ответственности за истребование товара у покупателя третьими лицами.", "Пункт 2 статьи 461 ГК РФ"],
                     "Подрядчик": ["3.1. Подрядчик обязан выполнить работу лично, без привлечения третьих лиц.", "Пункт 1 статьи 706 ГК РФ"],
@@ -156,7 +156,7 @@ class ContractAssessment:
         with open("rules.txt", "w", encoding="utf-8") as file:
             file.write(full_message.content)
         logger.info("Нормы права сохранены в файле rules.txt.")
-        self.rights = json.loads(response.choices[0].message.content)
+        self.rules = json.loads(response.choices[0].message.content)
         return self.rules
 
     def conclude(self):
@@ -240,10 +240,9 @@ class ContractAssessment:
         return self.report
 
     def process(self):
+        self.load_data()
         result = self.evaluate()
         if result:
-            self.load_data()
-            self.evaluate()
             self.extract()
             self.recall()
             self.conclude()
@@ -253,4 +252,5 @@ class ContractAssessment:
 
 
 assessment = ContractAssessment()
-assessment.process()
+
+assessment.recall()
