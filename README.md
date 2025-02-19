@@ -36,7 +36,7 @@ https://www.anthropic.com/research/building-effective-agents
 └── src                <- Инструменты, позволяющие создать AI-агента
 │   ├── __init__.py      <- Файл, делающий содержимое папки модулем пайтон
 │   ├── function_call.py <- Как вызвать функцию с помощью ллм
-│   ├── json_output.py   <- Как сделать, чтобы ллм отdечала в формате json
+│   ├── json_output.py   <- Как сделать, чтобы ллм отвечала в формате json
 │   └── llm_call.py      <- Обращение к ллм по API
 ├── main.py            <- Основной код проекта
 ```
