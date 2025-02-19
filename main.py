@@ -21,21 +21,19 @@ logger.addHandler(handler)
 
 class ContractAssessment:
     def __init__(self):
-        self.input_file = Path(__file__).parent / "data" / "raw" / "1.txt"
         self.messages = []
         self.data = None
         self.rights = None
         self.rules = None
         self.risks = None
-        self.report = None
-
-    def load_data(self):
-        with open(self.input_file, mode="r", encoding="utf-8") as file:
-            self.data = file.read()
-            return self.data
+        self.full_report = None
 
     def evaluate(self):
         logger.info("Проверяю, является ли текст, введенный пользователем,договором.")
+        with open(
+            Path(__file__).parent / "data" / "raw" / "1.txt", mode="r", encoding="utf-8"
+        ) as file:
+            self.data = file.read()
         self.messages.append(
             {
                 "role": "system",
@@ -67,6 +65,10 @@ class ContractAssessment:
 
     def extract(self):
         logger.info("Извлекаю из договора права и обязанности.")
+        with open(
+            Path(__file__).parent / "data" / "raw" / "1.txt", mode="r", encoding="utf-8"
+        ) as file:
+            self.data = file.read()
         self.messages.append(
             {
                 "role": "system",
@@ -108,6 +110,12 @@ class ContractAssessment:
 
     def recall(self):
         logger.info("Подбираю нормы права для извлеченных прав и обязанностей.")
+        with open(
+            Path(__file__).parent / "rights.txt",
+            mode="r",
+            encoding="utf-8",
+        ) as file:
+            self.rights = file.read()
         self.messages.append(
             {
                 "role": "system",
@@ -145,7 +153,7 @@ class ContractAssessment:
                 """,
             }
         )
-        self.messages.append({"role": "user", "content": f"{self.rights}"})
+        self.messages.append({"role": "user", "content": self.rights})
         response = client.chat.completions.create(
             model="deepseek-chat",
             messages=self.messages,
@@ -164,6 +172,12 @@ class ContractAssessment:
         logger.info(
             "Проверяю извлеченные права и обязанности на предмет соовтетствия закону, оцениваю риски."
         )
+        with open(
+            Path(__file__).parent / "rules.txt",
+            mode="r",
+            encoding="utf-8",
+        ) as file:
+            self.rules = file.read()
         self.messages.append(
             {
                 "role": "system",
@@ -199,7 +213,7 @@ class ContractAssessment:
                 """,
             }
         )
-        self.messages.append({"role": "user", "content": f"{self.rules}"})
+        self.messages.append({"role": "user", "content": self.rules})
         response = client.chat.completions.create(
             model="deepseek-chat",
             messages=self.messages,
@@ -216,6 +230,12 @@ class ContractAssessment:
 
     def report(self):
         logger.info("Генерирую итоговое заключение.")
+        with open(
+            Path(__file__).parent / "risks.txt",
+            mode="r",
+            encoding="utf-8",
+        ) as file:
+            self.risks = file.read()
         self.messages.append(
             {
                 "role": "system",
@@ -226,7 +246,7 @@ class ContractAssessment:
                 """,
             }
         )
-        self.messages.append({"role": "user", "content": f"{self.risks}"})
+        self.messages.append({"role": "user", "content": self.risks})
         response = client.chat.completions.create(
             model="deepseek-chat", messages=self.messages
         )
@@ -236,11 +256,10 @@ class ContractAssessment:
         with open("report.txt", "w", encoding="utf-8") as file:
             file.write(full_message.content)
         logger.info("Доклад сохранен в файле report.txt.")
-        self.report = json.loads(response.choices[0].message.content)
-        return self.report
+        self.full_reportreport = json.loads(response.choices[0].message.content)
+        return self.full_reportreport
 
     def process(self):
-        self.load_data()
         result = self.evaluate()
         if result:
             self.extract()
@@ -253,4 +272,4 @@ class ContractAssessment:
 
 assessment = ContractAssessment()
 
-assessment.process()
+assessment.report()

@@ -21,23 +21,18 @@
 ## Структура проекта
 
 ```
-├── README.md          <- The top-level README for developers using this project
+├── README.md          <- Общая информация о проекте
 │
 ├── data
-│   ├── external       <- Data from third party sources
-│   ├── interim        <- Intermediate data that has been transformed
-│   ├── processed      <- The final, canonical data sets for modeling
-│   └── raw            <- The original, immutable data dump
+│   ├── processed      <- Обработанная информация
+│   └── raw            <- Необработанная информация на входе
 │
-├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g. generated with `pip freeze > requirements.txt`
+├── requirements.txt   <- Необходимые зависимости проета (библиотеки)`
 │
-└── src                <- Source code for this project
-│   ├── __init__.py    <- Makes src a Python module
-│   ├── dataset.py     <- Scripts to download or generate data
-│   ├── utils.py       <- Usable functions
-│   └── tools          <- Intruments making an LLM an agent
-│       ├── function_call.py <- How to make an LLM call a function
-│       └── json_output.py   <- How to make an LLM create a json
-│
-├── main.py   <- The main code file
+└── src                <- Инструменты, позволяющие создать AI-агента
+│   ├── __init__.py      <- Файл, делающий содержимое папки модулем пайтон
+│   ├── function_call.py <- Как вызвать функцию с помощью ллм
+│   ├── json_output.py   <- Как сделать, чтобы ллм отdечала в формате json
+│   └── llm_call.py      <- Обращение к ллм по API
+├── main.py   <- Гланвый код проекта
 ```
