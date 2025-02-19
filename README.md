@@ -38,5 +38,5 @@ https://www.anthropic.com/research/building-effective-agents
 │   ├── function_call.py <- Как вызвать функцию с помощью ллм
 │   ├── json_output.py   <- Как сделать, чтобы ллм отdечала в формате json
 │   └── llm_call.py      <- Обращение к ллм по API
-├── main.py   <- Гланвый код проекта
+├── main.py            <- Основной код проекта
 ```
