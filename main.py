@@ -272,4 +272,4 @@ class ContractAssessment:
 
 assessment = ContractAssessment()
 
-assessment.report()
+assessment.process()
